@@ -65,6 +65,7 @@ class Player(pygame.sprite.Sprite):
         self.hide_timer = 0
         self.power_level = 1
         self.power_timer = 0
+        self.power_display_timer = 0  # New timer for power-up display
 
     def update(self):
         # Unhide if hidden
@@ -77,6 +78,7 @@ class Player(pygame.sprite.Sprite):
         if self.power_level > 1 and pygame.time.get_ticks() - self.power_timer > 5000:
             self.power_level -= 1
             self.power_timer = pygame.time.get_ticks()
+            self.power_display_timer = pygame.time.get_ticks()  # Set display timer when power decreases
 
         # Movement
         self.speed_x = 0
@@ -102,13 +104,14 @@ class Player(pygame.sprite.Sprite):
                 bullets_group.add(bullet)
                 bullets_shot.append(bullet)
             elif self.power_level >= 2:
-                bullet1 = Bullet(self.rect.left + 10, self.rect.top)
-                bullet2 = Bullet(self.rect.right - 10, self.rect.top)
-                all_sprites_group.add(bullet1)
-                all_sprites_group.add(bullet2)
-                bullets_group.add(bullet1)
-                bullets_group.add(bullet2)
-                bullets_shot.extend([bullet1, bullet2])
+                # Enhanced spread pattern for powered-up shots
+                spread = 15  # Angle of spread between bullets
+                for i in range(self.power_level):
+                    offset = (i - (self.power_level - 1) / 2) * spread
+                    bullet = Bullet(self.rect.centerx, self.rect.top, offset)
+                    all_sprites_group.add(bullet)
+                    bullets_group.add(bullet)
+                    bullets_shot.append(bullet)
             return bullets_shot
         return []
 
@@ -120,6 +123,7 @@ class Player(pygame.sprite.Sprite):
     def powerup(self):
         self.power_level += 1
         self.power_timer = pygame.time.get_ticks()
+        self.power_display_timer = pygame.time.get_ticks()  # Set display timer when power increases
 
 # Enemy class
 class Enemy(pygame.sprite.Sprite):
@@ -148,17 +152,19 @@ class Enemy(pygame.sprite.Sprite):
 
 # Bullet class
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, offset=0):
         super().__init__()
         self.image = bullet_img
         self.rect = self.image.get_rect()
         self.rect.centerx = x
         self.rect.bottom = y
-        self.speedy = -10  # Fixed: Changed to negative to move upward and increased speed
+        self.speedy = -10
+        self.speedx = offset * 0.3  # Scale the spread effect
 
     def update(self):
         self.rect.y += self.speedy
-        if self.rect.bottom < 0:
+        self.rect.x += self.speedx
+        if self.rect.bottom < 0 or self.rect.left < 0 or self.rect.right > SCREEN_WIDTH:
             self.kill()
 
 # Powerup class
@@ -326,6 +332,10 @@ def main_game():
         draw_text(screen, str(score), 18, SCREEN_WIDTH / 2, 10)
         draw_shield_bar(screen, 5, 5, player.shield)
         draw_lives(screen, SCREEN_WIDTH - 100, 5, player.lives, player_mini_img)
+        
+        # Display power level when changed
+        if pygame.time.get_ticks() - player.power_display_timer < 2000:  # Show for 2 seconds
+            draw_text(screen, f"POWER LEVEL {player.power_level}", 24, SCREEN_WIDTH / 2, 50)
         
         # Flip the display
         pygame.display.flip()
