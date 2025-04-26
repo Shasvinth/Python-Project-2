@@ -2,7 +2,7 @@ import pygame
 import random
 import sys
 import os
-
+#rate
 # Initialize pygame
 pygame.init()
 
