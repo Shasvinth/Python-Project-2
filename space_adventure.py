@@ -271,21 +271,26 @@ def main_game():
         all_sprites.update()
         
         # Check bullet-enemy collisions
-        hits = pygame.sprite.groupcollide(enemies, bullets, True, True)  # Changed False to True to destroy enemies
+        hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
         for hit in hits:
-            score += 100  # Fixed: Changed score to 100 as per requirements
-            # Create explosion
+            score += 100
             explosion = Explosion(hit.rect.center, 30)
             all_sprites.add(explosion)
-            # Spawn new enemy
             new_enemy = Enemy()
             all_sprites.add(new_enemy)
             enemies.add(new_enemy)
-            # Random chance for power-up
-            if random.random() > 0.9:  # Reduced chance to 10% to make power-ups more special
+            if random.random() > 0.9:
                 powerup = Powerup()
                 all_sprites.add(powerup)
                 powerups.add(powerup)
+        
+        # Check player-powerup collisions
+        hits = pygame.sprite.spritecollide(player, powerups, True)
+        for hit in hits:
+            if hit.type == 'shield':
+                player.shield = min(100, player.shield + 20)
+            elif hit.type == 'power':
+                player.powerup()
         
         # Check player-enemy collisions
         hits = pygame.sprite.spritecollide(player, enemies, True)
@@ -297,14 +302,14 @@ def main_game():
             all_sprites.add(new_enemy)
             enemies.add(new_enemy)
             if player.shield <= 0:
-                player.lives -= 1  # Uncommented to properly decrease lives
+                player.lives -= 1
                 player.shield = 100
                 player.hide()
                 if player.lives <= 0:
                     game_over = True
         
         if game_over:
-            running = False  # Added to end the game when lives are depleted
+            running = False
             pygame.quit()
             sys.exit()
             
