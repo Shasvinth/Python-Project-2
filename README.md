@@ -1,4 +1,4 @@
-# 🚀 Galaxy Invaders
+# 🚀 Galaxy Invaderss
 
 A classic arcade-style space shooter game built using Python and the Pygame library.
 
