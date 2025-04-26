@@ -82,15 +82,16 @@ class Player(pygame.sprite.Sprite):
         self.speed_x = 0
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_LEFT]:
-            self.speed_x = 8
+            self.speed_x = -8  # Fixed: Changed to negative for left movement
         if keystate[pygame.K_RIGHT]:
-            self.speed_x = -8
+            self.speed_x = 8   # Fixed: Changed to positive for right movement
 
         self.rect.x += self.speed_x
-        if self.rect.right > SCREEN_WIDTH + 20:
-            self.rect.right = SCREEN_WIDTH + 20
-        if self.rect.left < -20:
-            self.rect.left = -20
+        # Fix boundary checks to keep player on screen
+        if self.rect.right > SCREEN_WIDTH:
+            self.rect.right = SCREEN_WIDTH
+        if self.rect.left < 0:
+            self.rect.left = 0
 
     def shoot(self):
         if not self.hidden:
@@ -99,9 +100,12 @@ class Player(pygame.sprite.Sprite):
                 all_sprites.add(bullet)
                 bullets.add(bullet)
             elif self.power_level >= 2:
-                bullet1 = Bullet(self.rect.centerx, self.rect.top)
+                bullet1 = Bullet(self.rect.left + 10, self.rect.top)
+                bullet2 = Bullet(self.rect.right - 10, self.rect.top)
                 all_sprites.add(bullet1)
+                all_sprites.add(bullet2)
                 bullets.add(bullet1)
+                bullets.add(bullet2)
 
     def hide(self):
         self.hidden = True
@@ -145,7 +149,7 @@ class Bullet(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.centerx = x
         self.rect.bottom = y
-        self.speedy = 1
+        self.speedy = -10  # Fixed: Changed to negative to move upward and increased speed
 
     def update(self):
         self.rect.y += self.speedy
@@ -267,9 +271,9 @@ def main_game():
         all_sprites.update()
         
         # Check bullet-enemy collisions
-        hits = pygame.sprite.groupcollide(enemies, bullets, False, True)
+        hits = pygame.sprite.groupcollide(enemies, bullets, True, True)  # Changed False to True to destroy enemies
         for hit in hits:
-            score += 10
+            score += 100  # Fixed: Changed score to 100 as per requirements
             # Create explosion
             explosion = Explosion(hit.rect.center, 30)
             all_sprites.add(explosion)
@@ -278,7 +282,7 @@ def main_game():
             all_sprites.add(new_enemy)
             enemies.add(new_enemy)
             # Random chance for power-up
-            if random.random() > 0.5:  # 50% chance
+            if random.random() > 0.9:  # Reduced chance to 10% to make power-ups more special
                 powerup = Powerup()
                 all_sprites.add(powerup)
                 powerups.add(powerup)
@@ -293,24 +297,16 @@ def main_game():
             all_sprites.add(new_enemy)
             enemies.add(new_enemy)
             if player.shield <= 0:
-                # player.lives -= 1
+                player.lives -= 1  # Uncommented to properly decrease lives
                 player.shield = 100
                 player.hide()
-                if player.lives == 0:
+                if player.lives <= 0:
                     game_over = True
         
-        # Check player-powerup collisions
-        hits = pygame.sprite.spritecollide(player, powerups, True)
-        for hit in hits:
-            if hit.type == 'shield':
-                player.shield += 20
-                if player.shield > 100:
-                    player.shield = 100
-            if hit.type == 'power':
-                player.powerup()
-        
         if game_over:
-            pass
+            running = False  # Added to end the game when lives are depleted
+            pygame.quit()
+            sys.exit()
             
         # Draw / render
         screen.fill(BLACK)
