@@ -93,19 +93,24 @@ class Player(pygame.sprite.Sprite):
         if self.rect.left < 0:
             self.rect.left = 0
 
-    def shoot(self):
+    def shoot(self, all_sprites_group, bullets_group):
         if not self.hidden:
+            bullets_shot = []
             if self.power_level == 1:
                 bullet = Bullet(self.rect.centerx, self.rect.top)
-                all_sprites.add(bullet)
-                bullets.add(bullet)
+                all_sprites_group.add(bullet)
+                bullets_group.add(bullet)
+                bullets_shot.append(bullet)
             elif self.power_level >= 2:
                 bullet1 = Bullet(self.rect.left + 10, self.rect.top)
                 bullet2 = Bullet(self.rect.right - 10, self.rect.top)
-                all_sprites.add(bullet1)
-                all_sprites.add(bullet2)
-                bullets.add(bullet1)
-                bullets.add(bullet2)
+                all_sprites_group.add(bullet1)
+                all_sprites_group.add(bullet2)
+                bullets_group.add(bullet1)
+                bullets_group.add(bullet2)
+                bullets_shot.extend([bullet1, bullet2])
+            return bullets_shot
+        return []
 
     def hide(self):
         self.hidden = True
@@ -265,7 +270,7 @@ def main_game():
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    player.shoot()
+                    player.shoot(all_sprites, bullets)
         
         # Update
         all_sprites.update()
